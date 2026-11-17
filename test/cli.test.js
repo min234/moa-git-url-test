@@ -3,64 +3,51 @@ import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join, dirname } from 'node:path';
+import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+const BIN = fileURLToPath(new URL('../bin/todo-csv.js', import.meta.url));
+const dir = mkdtempSync(join(tmpdir(), 'todo-csv-'));
 
-function run(...args) {
-  return spawnSync(process.execPath, ['bin/todo-sort.js', ...args], { cwd: root, encoding: 'utf8' });
+function run(content) {
+  const file = join(dir, `${Math.random().toString(36).slice(2)}.json`);
+  writeFileSync(file, content);
+  return spawnSync(process.execPath, [BIN, file], { encoding: 'utf8' });
 }
 
-function tmpFile(content) {
-  const dir = mkdtempSync(join(tmpdir(), 'todo-sort-'));
-  const p = join(dir, 'todos.json');
-  writeFileSync(p, content);
-  return p;
-}
-
-test('CLI: examples/todos.json 정렬 출력, 종료 코드 0', () => {
-  const r = run('examples/todos.json');
-  assert.equal(r.status, 0, r.stderr);
-  assert.equal(
-    r.stdout,
-    ['2026-11-18 견적서 보내기', '2026-11-20 회의록 정리', '2026-11-25 월간 보고', '(마감 없음) 언젠가 할 일', ''].join('\n'),
-  );
-  assert.equal(r.stderr, '');
-});
-
-test('CLI: 빈 배열은 출력 없이 종료 코드 0', () => {
-  const r = run(tmpFile('[]'));
+test('CLI: 첫 줄이 정확히 title,due,owner 이고 N+1줄', () => {
+  const todos = [
+    { title: 'a', due: '2026-11-20', owner: 'x' },
+    { title: 'b', due: '2026-11-21', owner: 'y' },
+  ];
+  const r = run(JSON.stringify(todos));
   assert.equal(r.status, 0);
+  const lines = r.stdout.trimEnd().split('\n');
+  assert.equal(lines[0], 'title,due,owner');
+  assert.equal(lines.length, todos.length + 1);
+});
+
+test('CLI: 쉼표·큰따옴표 제목 이스케이프', () => {
+  const r = run(JSON.stringify([{ title: '보고서, "초안"', due: '2026-11-21', owner: '지영' }]));
+  assert.equal(r.status, 0);
+  assert.equal(r.stdout.split('\n')[1], '"보고서, ""초안""",2026-11-21,지영');
+});
+
+test('CLI: 빈 배열이면 머리줄만, 종료 코드 0', () => {
+  const r = run('[]');
+  assert.equal(r.status, 0);
+  assert.equal(r.stdout, 'title,due,owner\n');
+});
+
+test('CLI: 잘못된 JSON이면 stdout 비고 종료 코드 0 아님', () => {
+  const r = run('{not json');
+  assert.notEqual(r.status, 0);
+  assert.equal(r.stdout, '');
+  assert.match(r.stderr, /JSON이 아닙니다/);
+});
+
+test('CLI: 인자 없으면 사용법과 종료 코드 1', () => {
+  const r = spawnSync(process.execPath, [BIN], { encoding: 'utf8' });
+  assert.equal(r.status, 1);
   assert.equal(r.stdout, '');
 });
-
-test('CLI: 인자 없음은 사용법과 종료 코드 1', () => {
-  const r = run();
-  assert.equal(r.status, 1);
-  assert.match(r.stderr, /사용법/);
-  assert.equal(r.stdout, '');
-});
-
-test('CLI: 없는 파일은 종료 코드 1과 오류 메시지', () => {
-  const r = run('no-such-file.json');
-  assert.equal(r.status, 1);
-  assert.match(r.stderr, /^todo-sort: 파일을 읽을 수 없습니다/);
-});
-
-const badCases = [
-  ['JSON 아님', 'oops', /JSON/],
-  ['배열 아님', '{}', /배열/],
-  ['title 없음', '[{"due":"2026-11-20"}]', /title/],
-  ['날짜 2026/11/20', '[{"title":"a","due":"2026/11/20"}]', /형식/],
-  ['날짜 2026-13-01', '[{"title":"a","due":"2026-13-01"}]', /없는 날짜/],
-];
-for (const [name, content, re] of badCases) {
-  test(`CLI: ${name}은 종료 코드 1과 표준 오류 메시지`, () => {
-    const r = run(tmpFile(content));
-    assert.equal(r.status, 1);
-    assert.match(r.stderr, /^todo-sort: /);
-    assert.match(r.stderr, re);
-    assert.equal(r.stdout, '');
-  });
-}

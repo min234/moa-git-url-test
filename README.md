@@ -15,7 +15,7 @@ Node 18 이상, 외부 의존성 없음.
 ```bash
 node bin/todo-sort.js <할 일 JSON 파일>
 # 또는 npm link 뒤
-todo-sort examples/todos.json
+todo-sort examples/todos-sort.json
 npm test   # 시험 실행
 ```
 
@@ -25,7 +25,7 @@ npm test   # 시험 실행
 
 정렬 규칙: 마감(`due`) 오름차순, 같은 마감은 입력 순서 유지, 마감 없는 일(`due` 없음·`null`)은 입력 순서대로 맨 뒤.
 
-### 입력 예시 (`examples/todos.json`)
+### 입력 예시 (`examples/todos-sort.json`)
 
 ```json
 [
@@ -48,3 +48,7 @@ npm test   # 시험 실행
 2026-11-25 월간 보고
 (마감 없음) 언젠가 할 일
 ```
+
+## todo-csv 사용법
+
+할 일 JSON 배열(`[{ "title", "due", "owner" }]`)을 CSV로 바꿔 표준 출력에 씁니다: `node bin/todo-csv.js examples/todos.json > todos.csv`. 머리줄은 `title,due,owner`이고, 쉼표·큰따옴표·줄바꿈이 든 값은 RFC 4180대로 따옴표로 감쌉니다. 빠진 칸은 빈 칸, 마감일은 입력 값을 그대로 옮깁니다. 입력이 JSON 배열이 아니면 오류 메시지와 함께 종료 코드 1로 끝납니다. 시험: `npm test`.
