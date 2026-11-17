@@ -1,0 +1,16 @@
+{
+  "name": "todo-sort",
+  "version": "0.1.0",
+  "description": "할 일 JSON을 마감순으로 정렬해 출력하는 CLI",
+  "type": "module",
+  "bin": {
+    "todo-sort": "bin/todo-sort.js"
+  },
+  "scripts": {
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "MIT"
+}
