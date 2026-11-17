@@ -52,3 +52,34 @@ npm test   # 시험 실행
 ## todo-csv 사용법
 
 할 일 JSON 배열(`[{ "title", "due", "owner" }]`)을 CSV로 바꿔 표준 출력에 씁니다: `node bin/todo-csv.js examples/todos.json > todos.csv`. 머리줄은 `title,due,owner`이고, 쉼표·큰따옴표·줄바꿈이 든 값은 RFC 4180대로 따옴표로 감쌉니다. 빠진 칸은 빈 칸, 마감일은 입력 값을 그대로 옮깁니다. 입력이 JSON 배열이 아니면 오류 메시지와 함께 종료 코드 1로 끝납니다. 시험: `npm test`.
+
+## todo-count — 할 일 개수 세기 CLI
+
+할 일 JSON 배열(`[{ "title", "due", "owner" }]`)을 읽어 개수를 표준 출력에 씁니다. Node 18 이상, 외부 의존성 없음.
+
+### 사용법
+
+```bash
+node bin/todo-count.js [--by-owner] <할 일 JSON 파일>
+# 또는 npm link 뒤
+todo-count examples/todos.json
+todo-count --by-owner examples/todos.json
+```
+
+- 기본: 전체 항목 수를 숫자 하나로 한 줄 출력합니다. 빈 배열이면 `0`.
+- `--by-owner`: 담당(`owner`)별로 `담당: 개수`를 한 줄씩 씁니다. 순서는 입력에서 처음 나온 순서이고, `owner`가 없거나 `null`이거나 공백뿐이면 `(담당 없음)`으로 묶어 맨 뒤에 씁니다. 담당 값은 앞뒤 공백을 지워 묶습니다. 빈 배열이면 출력이 없습니다.
+
+### 출력 예시 (`examples/todos.json`)
+
+```
+$ todo-count examples/todos.json
+3
+$ todo-count --by-owner examples/todos.json
+기획팀: 1
+개발팀: 1
+(담당 없음): 1
+```
+
+### 오류 규칙
+
+인자가 정확히 1개가 아니거나, 모르는 옵션이거나, 파일을 못 읽거나, JSON이 아니거나, 배열이 아니거나, 객체가 아닌 항목이 있으면 `todo-count: <이유>`를 표준 오류에 쓰고 종료 코드 1로 끝납니다. 시험: `npm test`.
