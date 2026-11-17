@@ -1,11 +1,12 @@
 {
   "name": "todo-tools",
   "version": "0.1.0",
-  "description": "할 일 JSON을 다루는 CLI 모음: 마감순 정렬(todo-sort), CSV 내보내기(todo-csv)",
+  "description": "할 일 JSON을 다루는 CLI 모음: 마감순 정렬(todo-sort), CSV 내보내기(todo-csv), 담당별 묶기(todo-group)",
   "type": "module",
   "bin": {
     "todo-sort": "bin/todo-sort.js",
-    "todo-csv": "bin/todo-csv.js"
+    "todo-csv": "bin/todo-csv.js",
+    "todo-group": "bin/todo-group.js"
   },
   "scripts": {
     "test": "node --test"
