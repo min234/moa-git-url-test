@@ -85,3 +85,47 @@ todo-group examples/todos.json
 ### 오류 규칙
 
 인자가 1개가 아니거나, 파일을 못 읽거나, JSON이 아니거나, 배열이 아니거나, 객체가 아닌 항목이 있거나, `title`이 없거나 빈 문자열이면 `todo-group: <이유>`를 표준 오류에 쓰고 종료 코드 1로 끝납니다.
+
+## todo-api — 할 일 목록 JSON API
+
+할 일 JSON 파일을 HTTP로 내보내는 작은 서버입니다. 웹 화면이 `GET /todos`로 목록을 받아 씁니다. Node 18 이상, 외부 의존성 없음.
+
+### 실행법
+
+```bash
+node bin/todo-api.js examples/todos.json            # 기본 포트: PORT 환경 변수, 없으면 3001
+node bin/todo-api.js examples/todos.json --port 8080
+# 켜지면 표준 출력에 한 줄: todo-api: http://localhost:3001/todos
+curl http://localhost:3001/todos
+```
+
+코드에서 쓸 때는 `import { createTodoServer } from './src/todoApi.js'`로 `createTodoServer({ file }).listen(port)`.
+
+### 응답 예시
+
+`GET /todos` → `200`, `Content-Type: application/json; charset=utf-8`, 본문은 검증된 할 일 배열 그대로:
+
+```json
+[
+  { "title": "주간 회의록 정리", "due": "2026-11-20", "owner": "기획팀" },
+  { "title": "보고서, \"초안\"", "due": "2026-11-21", "owner": "개발팀" },
+  { "title": "배포 점검", "due": "2026-11-24" }
+]
+```
+
+- 파일은 요청마다 새로 읽습니다. 파일을 고치면 다음 응답에 바로 반영됩니다.
+- `HEAD /todos`는 같은 머리에 본문 없이 `200`.
+- 쿼리 문자열은 무시합니다(`/todos?x=1`도 `/todos`).
+- 모든 응답에 `Access-Control-Allow-Origin: *`, `Access-Control-Allow-Methods: GET, HEAD, OPTIONS`. `OPTIONS`(아무 경로)는 `204`.
+
+### 오류 규칙
+
+| 상황 | 상태 | 본문 |
+| --- | --- | --- |
+| 파일을 못 읽음, JSON 아님, 배열 아님, 객체 아닌 항목, `title` 없음·빈 문자열, `due` 형식이 틀리거나 없는 날짜(예: `2026-02-30`) | 500 | `{"error":"<이유>"}` |
+| `/todos`에 `GET`·`HEAD`·`OPTIONS` 밖의 메서드 | 405 | `{"error":"method not allowed"}` |
+| 없는 경로 | 404 | `{"error":"not found"}` |
+
+500이 나도 서버는 계속 살아 있고, 파일을 고치면 다음 요청부터 `200`이 됩니다.
+
+명령줄 오류: 인자가 1개가 아니면 `todo-api: 사용법: todo-api <할 일 JSON 파일> [--port N]`을, 포트가 틀리거나 서버를 켤 수 없으면 `todo-api: <이유>`를 표준 오류에 쓰고 종료 코드 1.
