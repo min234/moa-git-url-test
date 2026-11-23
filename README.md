@@ -95,6 +95,7 @@ todo-group examples/todos.json
 ```bash
 node bin/todo-api.js examples/todos.json            # 기본 포트: PORT 환경 변수, 없으면 3001
 node bin/todo-api.js examples/todos.json --port 8080
+npm run api                                          # 위 첫 줄과 같음(examples/todos.json, 기본 포트)
 # 켜지면 표준 출력에 한 줄: todo-api: http://localhost:3001/todos
 curl http://localhost:3001/todos
 ```

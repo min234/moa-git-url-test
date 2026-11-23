@@ -136,3 +136,23 @@ test('API: 파일을 고치면 다음 응답에 반영된다(요청마다 읽기
   writeFileSync(file, '[{"title":"바뀜","due":"2026-12-01"}]');
   assert.deepEqual(await (await fetch(`${base}/todos`)).json(), [{ title: '바뀜', due: '2026-12-01' }]);
 });
+
+test('API 화면용 약속: 각 항목 title 문자열·due 없음/null/YYYY-MM-DD·owner 없음/문자열', async () => {
+  const base = await start(EXAMPLE);
+  const r = await fetch(`${base}/todos`);
+  assert.equal(r.status, 200);
+  assert.equal(r.headers.get('access-control-allow-origin'), '*');
+  const body = await r.json();
+  assert.ok(Array.isArray(body));
+  assert.equal(body.length, 3);
+  for (const [i, t] of body.entries()) {
+    assert.equal(typeof t.title, 'string', `${i}번째 title`);
+    assert.notEqual(t.title.trim(), '', `${i}번째 title 빈 문자열`);
+    if (t.due !== undefined && t.due !== null) {
+      assert.match(t.due, /^\d{4}-\d{2}-\d{2}$/, `${i}번째 due`);
+    }
+    if (t.owner !== undefined) {
+      assert.equal(typeof t.owner, 'string', `${i}번째 owner`);
+    }
+  }
+});
