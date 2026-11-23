@@ -10,7 +10,8 @@
     "todo-api": "bin/todo-api.js"
   },
   "scripts": {
-    "test": "node --test"
+    "test": "node --test",
+    "api": "node bin/todo-api.js examples/todos.json"
   },
   "engines": {
     "node": ">=18"
