@@ -7,8 +7,8 @@ const CORS = {
   'Access-Control-Allow-Methods': 'GET, HEAD, OPTIONS',
 };
 
-function send(req, res, status, body) {
-  const headers = { ...CORS };
+function send(req, res, status, body, extraHeaders = {}) {
+  const headers = { ...CORS, ...extraHeaders };
   let payload = '';
   if (body !== undefined) {
     payload = JSON.stringify(body);
@@ -31,7 +31,7 @@ export function createTodoServer({ file }) {
       const path = (req.url ?? '/').split('?')[0];
       if (path !== '/todos') return send(req, res, 404, { error: 'not found' });
       if (req.method !== 'GET' && req.method !== 'HEAD') {
-        return send(req, res, 405, { error: 'method not allowed' });
+        return send(req, res, 405, { error: 'method not allowed' }, { Allow: 'GET, HEAD, OPTIONS' });
       }
       let text;
       try {

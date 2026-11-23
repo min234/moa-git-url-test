@@ -124,12 +124,20 @@ curl http://localhost:3001/todos
 | 상황 | 상태 | 본문 |
 | --- | --- | --- |
 | 파일을 못 읽음, JSON 아님, 배열 아님, 객체 아닌 항목, `title` 없음·빈 문자열, `due` 형식이 틀리거나 없는 날짜(예: `2026-02-30`) | 500 | `{"error":"<이유>"}` |
-| `/todos`에 `GET`·`HEAD`·`OPTIONS` 밖의 메서드 | 405 | `{"error":"method not allowed"}` |
+| `/todos`에 `GET`·`HEAD`·`OPTIONS` 밖의 메서드 | 405 (머리 `Allow: GET, HEAD, OPTIONS`) | `{"error":"method not allowed"}` |
 | 없는 경로 | 404 | `{"error":"not found"}` |
 
 500이 나도 서버는 계속 살아 있고, 파일을 고치면 다음 요청부터 `200`이 됩니다.
 
 명령줄 오류: 인자가 1개가 아니면 `todo-api: 사용법: todo-api <할 일 JSON 파일> [--port N]`을, 포트가 틀리거나 서버를 켤 수 없으면 `todo-api: <이유>`를 표준 오류에 쓰고 종료 코드 1.
+
+### 서버 일 기준
+
+- **외부 의존성 0**: 서버는 `node:http`, 시험은 `node:test`·`node:assert`만 씁니다(Node 18+, ESM). 패키지를 더하지 않습니다.
+- **폴더 구조**: 로직은 `src/`(`src/todoApi.js`가 서버를 만들고 `listen`은 부르는 쪽이), 명령줄 진입점은 `bin/`(`bin/todo-api.js`), 시험은 `test/*.test.js`.
+- **오류 모양**: 오류 본문은 늘 `{"error":"<이유>"}` JSON(`Content-Type: application/json; charset=utf-8`)이고, 상태 코드는 위 오류 규칙표를 따릅니다. 405에는 `Allow` 머리를 붙입니다.
+- **응답 순서**: `GET /todos`는 파일의 순서를 그대로 돌려주고 정렬하지 않습니다(정렬은 `todo-sort`·화면 몫).
+- **시험 방식**: `listen(0)`으로 빈 포트에 실제 HTTP 서버를 띄워 `fetch`로 부르고, 입력은 임시 파일로 만들어 표(입력 → 상태·본문)로 돌립니다. 띄운 서버는 `after`에서 모두 닫습니다.
 
 ## web — 할 일 목록 화면
 

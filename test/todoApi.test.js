@@ -95,6 +95,27 @@ test('API: POST /todos → 405 {error}', async () => {
   assert.deepEqual(await r.json(), { error: 'method not allowed' });
 });
 
+test('API: POST /todos → 405, JSON Content-Type, Allow: GET, HEAD, OPTIONS', async () => {
+  const base = await start(EXAMPLE);
+  const r = await fetch(`${base}/todos`, { method: 'POST', body: '[]' });
+  assert.equal(r.status, 405);
+  assert.equal(r.headers.get('content-type'), 'application/json; charset=utf-8');
+  assert.equal(r.headers.get('allow'), 'GET, HEAD, OPTIONS');
+  assert.deepEqual(await r.json(), { error: 'method not allowed' });
+});
+
+test('API: 마감이 뒤섞인 입력 → GET /todos 본문은 입력 순서 그대로(정렬 안 함)', async () => {
+  const input = [
+    { title: '셋째 주 보고', due: '2026-11-25' },
+    { title: '둘째 주 회의', due: '2026-11-18', owner: '강도현' },
+    { title: '마감 없는 메모' },
+  ];
+  const base = await start(tempFile(JSON.stringify(input)));
+  const r = await fetch(`${base}/todos`);
+  assert.equal(r.status, 200);
+  assert.deepEqual(await r.json(), input);
+});
+
 const badFiles = {
   'JSON 아님': 'not json',
   '배열 아님': '{"title":"x"}',
