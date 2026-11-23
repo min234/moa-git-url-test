@@ -130,3 +130,17 @@ curl http://localhost:3001/todos
 500이 나도 서버는 계속 살아 있고, 파일을 고치면 다음 요청부터 `200`이 됩니다.
 
 명령줄 오류: 인자가 1개가 아니면 `todo-api: 사용법: todo-api <할 일 JSON 파일> [--port N]`을, 포트가 틀리거나 서버를 켤 수 없으면 `todo-api: <이유>`를 표준 오류에 쓰고 종료 코드 1.
+
+## web — 할 일 목록 화면
+
+`GET /todos` 결과를 목록으로 보여 주는 간단한 웹 화면입니다. 외부 의존성·빌드 없음.
+
+```bash
+npm run api          # API 켜기(http://localhost:3001/todos)
+open web/index.html  # 브라우저로 열기
+```
+
+- 기본 API 주소는 `http://localhost:3001/todos`이고, 주소창에 `?api=<주소>`를 붙이면 바꿀 수 있습니다(예: `web/index.html?api=http://localhost:8080/todos`).
+- 항목은 `마감 제목 (담당)`으로 보입니다. 마감이 없으면 `(마감 없음)`, 담당이 없으면 담당 표시를 생략합니다.
+- 불러오는 동안 `불러오는 중…`, 할 일이 0건이면 `할 일이 없습니다`, 실패하면 `목록을 불러오지 못했습니다: <이유>`.
+- 그리기·불러오기는 `web/todoView.js`의 순수 함수라 `npm test`(test/webView.test.js)로 시험합니다.
