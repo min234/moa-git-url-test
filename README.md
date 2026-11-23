@@ -133,7 +133,7 @@ curl http://localhost:3001/todos
 
 ## web — 할 일 목록 화면
 
-`GET /todos` 결과를 목록으로 보여 주는 간단한 웹 화면입니다. 외부 의존성·빌드 없음.
+`GET /todos` 결과를 표로 보여 주는 간단한 웹 화면입니다. 외부 의존성·빌드 없음.
 
 ```bash
 npm run api          # API 켜기(http://localhost:3001/todos)
@@ -141,6 +141,9 @@ open web/index.html  # 브라우저로 열기
 ```
 
 - 기본 API 주소는 `http://localhost:3001/todos`이고, 주소창에 `?api=<주소>`를 붙이면 바꿀 수 있습니다(예: `web/index.html?api=http://localhost:8080/todos`).
-- 항목은 `마감 제목 (담당)`으로 보입니다. 마감이 없으면 `(마감 없음)`, 담당이 없으면 담당 표시를 생략합니다.
-- 불러오는 동안 `불러오는 중…`, 할 일이 0건이면 `할 일이 없습니다`, 실패하면 `목록을 불러오지 못했습니다: <이유>`.
-- 그리기·불러오기는 `web/todoView.js`의 순수 함수라 `npm test`(test/webView.test.js)로 시험합니다.
+- 화면 순서: 제목줄(`할 일 목록` + `총 N건` 배지) → 담당 필터 알약(전체/담당별 건수) → 표(마감·제목·담당) → 바닥줄 `총 N건`.
+- 담당 필터는 주소 해시로 바뀝니다: `#/` = 전체, `#/owner/<담당>` = 그 담당만(담당 이름은 `encodeURIComponent`). 목록은 처음 한 번만 불러오고, 해시가 바뀌면 받은 목록으로 다시 그립니다.
+- 마감이 없으면 `(마감 없음)`, 담당이 없으면 담당 칸은 `—`로 보입니다.
+- 상태는 색 칸 한 줄: 불러오는 동안 `불러오는 중…`(회색), 0건이면 `할 일이 없습니다`(회색, 바닥줄 숨김), 없는 담당이면 `'<담당>' 담당의 할 일이 없습니다`, 실패하면 `목록을 불러오지 못했습니다: <이유>`(빨강, `role="alert"`).
+- 색은 `web/index.html`의 CSS 변수 한 곳에서 정합니다. 강조 초록은 `--accent: #047857` 하나, 시스템 다크 모드(`prefers-color-scheme: dark`) 또는 `<html data-theme="dark">`이면 변수만 바뀝니다. 등장 움직임은 260ms이고 `prefers-reduced-motion: reduce`이면 끕니다. 좁은 화면(≤480px)에서도 표가 넘치지 않습니다.
+- 그리기·필터·불러오기는 `web/todoView.js`의 순수 함수(`renderTodos`, `renderFilters`, `filterByRoute`, `loadTodos`)라 `npm test`(test/webView.test.js)로 시험합니다.
