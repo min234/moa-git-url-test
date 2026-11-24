@@ -23,25 +23,17 @@ function send(req, res, status, body) {
 
 class TooLarge extends Error {}
 
+// 한도를 넘으면 남은 본문은 읽어 버린 뒤 TooLarge로 끝낸다(먼저 끊으면 보내는 쪽이 응답을 못 받는다).
 function readBody(req, limit) {
   return new Promise((resolve, reject) => {
     const chunks = [];
     let size = 0;
-    let over = false;
     req.on('data', (chunk) => {
-      if (over) return;
       size += chunk.length;
-      if (size > limit) {
-        over = true;
-        chunks.length = 0;
-        reject(new TooLarge());
-        return;
-      }
-      chunks.push(chunk);
+      if (size <= limit) chunks.push(chunk);
+      else chunks.length = 0;
     });
-    req.on('end', () => {
-      if (!over) resolve(Buffer.concat(chunks).toString('utf8'));
-    });
+    req.on('end', () => (size > limit ? reject(new TooLarge()) : resolve(Buffer.concat(chunks).toString('utf8'))));
     req.on('error', reject);
   });
 }
@@ -58,23 +50,11 @@ export function createReplayServer({ maxBody = MAX_BODY } = {}) {
       const path = (req.url ?? '/').split('?')[0];
       if (path !== '/replay') return send(req, res, 404, { error: 'not found' });
       if (req.method !== 'POST') return send(req, res, 405, { error: 'method not allowed' });
-      const declared = Number(req.headers['content-length']);
-      if (Number.isFinite(declared) && declared > maxBody) {
-        res.setHeader('Connection', 'close');
-        send(req, res, 413, { error: `기록이 너무 큽니다(최대 ${maxBody}바이트)` });
-        req.resume();
-        return;
-      }
       let text;
       try {
         text = await readBody(req, maxBody);
       } catch (e) {
-        if (e instanceof TooLarge) {
-          res.setHeader('Connection', 'close');
-          send(req, res, 413, { error: `기록이 너무 큽니다(최대 ${maxBody}바이트)` });
-          req.resume();
-          return;
-        }
+        if (e instanceof TooLarge) return send(req, res, 413, { error: `기록이 너무 큽니다(최대 ${maxBody}바이트)` });
         throw e;
       }
       const result = parseSessionLog(text);
