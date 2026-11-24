@@ -1,0 +1,10 @@
+{"type":"user","timestamp":"2026-11-20T09:00:00.000Z","uuid":"u1","message":{"role":"user","content":"README의 오타를 고쳐 줘"}}
+{"type":"attachment","timestamp":"2026-11-20T09:00:00.100Z","uuid":"x1","attachment":{"kind":"note"}}
+{"type":"assistant","timestamp":"2026-11-20T09:00:01.000Z","uuid":"a1","message":{"role":"assistant","content":[{"type":"thinking","thinking":"먼저 README를 읽어 오타 위치를 찾는다.\n그다음 고친다."}]}}
+{"type":"assistant","timestamp":"2026-11-20T09:00:02.000Z","uuid":"a2","message":{"role":"assistant","content":[{"type":"tool_use","id":"toolu_read1","name":"Read","input":{"file_path":"README.md"}}]}}
+{"type":"user","timestamp":"2026-11-20T09:00:02.350Z","uuid":"u2","message":{"role":"user","content":[{"type":"tool_result","tool_use_id":"toolu_read1","content":"# 샘플\n설명서 입니다"}]}}
+{"type":"assistant","timestamp":"2026-11-20T09:00:04.000Z","uuid":"a3","message":{"role":"assistant","content":[{"type":"tool_use","id":"toolu_edit1","name":"Edit","input":{"file_path":"README.md","old_string":"설명서 입니다","new_string":"설명서입니다"}}]}}
+{"type":"user","timestamp":"2026-11-20T09:00:04.200Z","uuid":"u3","message":{"role":"user","content":[{"type":"tool_result","tool_use_id":"toolu_edit1","content":[{"type":"text","text":"The file README.md has been updated."}]}]}}
+{"type":"assistant","timestamp":"2026-11-20T09:00:05.000Z","uuid":"a4","message":{"role":"assistant","content":[{"type":"tool_use","id":"toolu_bash1","name":"Bash","input":{"command":"npm test","description":"시험 실행"}}]}}
+{"type":"user","timestamp":"2026-11-20T09:00:07.500Z","uuid":"u4","message":{"role":"user","content":[{"type":"tool_result","tool_use_id":"toolu_bash1","content":"# pass 3\n# fail 0","is_error":false}]}}
+{"type":"assistant","timestamp":"2026-11-20T09:00:08.000Z","uuid":"a5","message":{"role":"assistant","content":[{"type":"text","text":"오타를 고쳤고 시험도 통과했어요."}]}}

@@ -144,3 +144,65 @@ open web/index.html  # 브라우저로 열기
 - 항목은 `마감 제목 (담당)`으로 보입니다. 마감이 없으면 `(마감 없음)`, 담당이 없으면 담당 표시를 생략합니다.
 - 불러오는 동안 `불러오는 중…`, 할 일이 0건이면 `할 일이 없습니다`, 실패하면 `목록을 불러오지 못했습니다: <이유>`.
 - 그리기·불러오기는 `web/todoView.js`의 순수 함수라 `npm test`(test/webView.test.js)로 시험합니다.
+
+## replay-api — AI 세션 기록 재생 API
+
+Claude Code 세션 기록(JSONL 파일 하나)을 받아 AI가 무엇을 읽고·고치고·돌렸는지 시간 순서의 단계 목록으로 바꿔 줍니다. 재생 화면이 이 목록으로 타임라인을 그립니다. Node 18 이상, 외부 의존성 없음. 기록은 저장하지 않고 요청마다 바꿔 돌려주기만 합니다.
+
+### 실행법
+
+```bash
+node bin/replay-api.js              # 기본 포트: PORT 환경 변수, 없으면 3002
+node bin/replay-api.js --port 8080
+npm run replay-api                  # 위 첫 줄과 같음
+# 켜지면 표준 출력에 한 줄: replay-api: http://localhost:3002/replay
+curl -X POST --data-binary @examples/session-sample.jsonl http://localhost:3002/replay
+```
+
+코드에서 쓸 때는 `import { createReplayServer } from './src/replayApi.js'`, 변환만 쓸 때는 `import { parseSessionLog } from './src/replayLog.js'`.
+
+### 응답 예시
+
+`POST /replay`(본문 = 기록 파일 내용 그대로) → `200`, `Content-Type: application/json; charset=utf-8`:
+
+```json
+{
+  "steps": [
+    { "index": 0, "kind": "thinking", "label": "생각", "at": "2026-11-20T09:00:01.000Z", "durationMs": 1000, "summary": "먼저 README를 읽어 오타 위치를 찾는다.", "content": "…" },
+    { "index": 1, "kind": "read", "label": "읽기", "at": "2026-11-20T09:00:02.000Z", "durationMs": 350, "summary": "읽기: README.md", "content": "…", "tool": "Read", "toolUseId": "toolu_read1" },
+    { "index": 2, "kind": "result", "label": "결과", "at": "2026-11-20T09:00:02.350Z", "durationMs": 1650, "summary": "# 샘플", "content": "…", "toolUseId": "toolu_read1", "isError": false }
+  ],
+  "stats": { "lines": 10, "used": 8, "ignored": 2, "badLines": 0 }
+}
+```
+
+### steps 칸 약속
+
+| 칸 | 뜻 |
+| --- | --- |
+| `index` | 0부터 순서 번호 |
+| `kind` / `label` | `read` 읽기 · `edit` 수정 · `command` 명령 · `result` 결과 · `thinking` 생각 |
+| `at` | 그 줄의 시각(ISO 문자열) |
+| `durationMs` | 도구 호출은 같은 `toolUseId` 결과까지, 그 밖은 다음 단계까지(밀리초). 알 수 없거나 마지막이면 `null` |
+| `summary` | 120자 이하 한 줄 |
+| `content` | 본문(20,000자 넘으면 잘리고 `…(잘림)`) |
+| `tool`, `toolUseId`, `isError` | 도구 호출엔 `tool`·`toolUseId`, 결과엔 `toolUseId`·`isError` |
+
+- 종류 나눔: Read·Grep·Glob·LS·WebFetch·WebSearch → 읽기, Edit·Write·MultiEdit·NotebookEdit → 수정, 그 밖의 도구(Bash 등) → 명령, 도구 결과 → 결과, thinking·text → 생각.
+- `type`이 `user`·`assistant`인 줄만 씁니다. 다른 줄 종류(attachment 등)와 사용자 프롬프트(문자열 내용)는 `stats.ignored`, 깨진 JSON 줄은 `stats.badLines`로 세고 건너뜁니다.
+
+### 오류 규칙
+
+| 상황 | 상태 | 본문 |
+| --- | --- | --- |
+| 빈 본문, 쓸 단계가 하나도 없음 | 400 | `{"error":"<이유>","stats":{…}}` |
+| 본문이 10MB 넘음 | 413 | `{"error":"<이유>"}` |
+| `/replay`에 `POST`·`OPTIONS` 밖의 메서드 | 405 | `{"error":"method not allowed"}` |
+| 없는 경로 | 404 | `{"error":"not found"}` |
+| 그 밖의 예외 | 500 | `{"error":"기록을 처리하지 못했습니다"}` |
+
+모든 응답에 `Access-Control-Allow-Origin: *`, `Access-Control-Allow-Methods: POST, OPTIONS`. `OPTIONS`(아무 경로)는 `204`. 쿼리 문자열은 무시합니다.
+
+### 비밀 가림과 한계
+
+`summary`·`content`에서 다음을 `[가림]`으로 바꿉니다: `sk-ant-…`·`sk-…` 키, `ghp_…`·`github_pat_…`, `xoxb-…` 같은 Slack 토큰, `AKIA…`, `Bearer …`, `password`·`passwd`·`secret`·`token` 뒤의 `=`/`:` 값, PEM 개인 키 덩어리. 정해진 패턴만 찾으므로 다른 모양의 비밀은 그대로 남을 수 있습니다 — 공유 전에 기록을 확인하세요. 명령줄 오류: 위치 인자가 있으면 사용법, 포트가 틀리거나 서버를 켤 수 없으면 `replay-api: <이유>`를 표준 오류에 쓰고 종료 코드 1.
