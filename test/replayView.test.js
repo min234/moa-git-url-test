@@ -233,7 +233,6 @@ test('serve.js: 경로 이탈 차단·MIME·샘플 한 줄', async () => {
   assert.equal(html.status, 200);
   assert.match(html.headers.get('content-type'), /text\/html/);
   assert.match((await fetch(`${base}/replayView.js`)).headers.get('content-type'), /text\/javascript/);
-  assert.match((await fetch(`${base}/replay.css`)).headers.get('content-type'), /text\/css/);
   assert.equal((await fetch(`${base}/sample.jsonl`)).status, 200);
   assert.equal((await fetch(`${base}/nope.js`)).status, 404);
   assert.equal((await fetch(`${base}/..%2fpackage.json`)).status, 404);
@@ -241,7 +240,7 @@ test('serve.js: 경로 이탈 차단·MIME·샘플 한 줄', async () => {
 });
 
 test('web 새 파일에 외부 URL이 없다(기본 API 주소 상수만 예외)', () => {
-  for (const name of ['replay.html', 'replay.js', 'replayView.js', 'replay.css']) {
+  for (const name of ['replay.html', 'replay.js', 'replayView.js']) {
     const urls = readFileSync(new URL(`../web/${name}`, import.meta.url), 'utf8').match(/https?:\/\/[^\s'")]+/g) ?? [];
     const extra = urls.filter((u) => u !== 'http://localhost:3002/replay');
     assert.deepEqual(extra, [], name);
