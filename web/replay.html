@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AI 작업 되감기</title>
+  <link rel="stylesheet" href="./replay.css">
+</head>
+<body>
+  <header class="top">
+    <h1>AI 작업 되감기</h1>
+    <div class="pick" id="drop">
+      <label class="file">기록 파일 고르기<input type="file" id="file" accept=".jsonl,.json,.txt,text/plain,application/json"></label>
+      <button type="button" id="sample">샘플 불러오기</button>
+      <span class="hint">또는 파일을 여기로 끌어다 놓기</span>
+    </div>
+  </header>
+  <main id="app" aria-live="polite"></main>
+  <script type="module" src="./replay.js"></script>
+</body>
+</html>
