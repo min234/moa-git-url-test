@@ -1,17 +1,19 @@
 {
   "name": "todo-tools",
   "version": "0.1.0",
-  "description": "할 일 JSON을 다루는 CLI 모음: 마감순 정렬(todo-sort), CSV 내보내기(todo-csv), 담당별 묶기(todo-group), 할 일 목록 JSON API(todo-api)",
+  "description": "할 일 JSON을 다루는 CLI 모음: 마감순 정렬(todo-sort), CSV 내보내기(todo-csv), 담당별 묶기(todo-group), 할 일 목록 JSON API(todo-api), 세션 기록 재생 API(replay-api)",
   "type": "module",
   "bin": {
     "todo-sort": "bin/todo-sort.js",
     "todo-csv": "bin/todo-csv.js",
     "todo-group": "bin/todo-group.js",
-    "todo-api": "bin/todo-api.js"
+    "todo-api": "bin/todo-api.js",
+    "replay-api": "bin/replay-api.js"
   },
   "scripts": {
     "test": "node --test",
-    "api": "node bin/todo-api.js examples/todos.json"
+    "api": "node bin/todo-api.js examples/todos.json",
+    "replay-api": "node bin/replay-api.js"
   },
   "engines": {
     "node": ">=18"
